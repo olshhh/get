@@ -1,36 +1,35 @@
 import RPi.GPIO as GPIO
 
-dac = [26,19,13,6,5,11,9,10]
-bits = len(dac)
-level = 2**bits
-maxU = 3.3
+dac = [26, 19, 13, 6, 5, 11, 9, 10]
 
+GPIO.setmode (GPIO.BCM)
 
-def dec2bin(value):
-    return [int(bin) for bin in bin(value)[2:].zfill(bits)] 
+for i in range (8): GPIO.setup(dac[i], GPIO.OUT)
 
-def dec2dec(value):
-    signal = dec2bin(value)
-    GPIO.output(dac, signal)
+def decimal2binary(value):
+ 
+    return [int(bit) for bit in bin(value)[2:].zfill(8)]
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(dac, GPIO.OUT, initial = GPIO.LOW)
+def binary2decimal (a):
+    val = 0
+    for i in range (8): val += a[7 - i] * pow (2, i)
+    return val
 
-
-try: 
-    while True: 
-        inputStr = input("Enter number 0 - 255; press 'q' for quit " )
-
-        if inputStr.isdigit():
-            value = int(inputStr)
-            if value >= level :
-                print("Error")
-                continue 
-            print(str((maxU/ 2**8)*int(inputStr)) + " V")
-            dec2dec(value)
-        elif inputStr == 'q': 
+try:
+    while True:
+        a = input()
+        if (a.isdigit() == False):
+            print("Enter value!\n")
+            continue
+        a = int (a)
+        if a < 0:
+            print("Enter positive value!")
+            continue
+        if str (a) == "q":
             break
-        else:  
-            print("Error")
+        a = decimal2binary(a)
+        for i in range (8): GPIO.output(dac[i], a[i])
+        print (binary2decimal(a)/ 256 * 3.3)
 finally:
-    GPIO.output(dac, 0)
+    for i in range (8): GPIO.output(dac[i], 0)
+    GPIO.cleanup()

@@ -1,31 +1,49 @@
 import RPi.GPIO as GPIO
-import time 
-dac = [26,19,13,6,5,11,9,10]
-bits = len(dac)
-level = 2**bits
-maxU = 3.3
+import time
 
+dac = [26, 19, 13, 6, 5, 11, 9, 10]
 
-def dec2bin(value):
-    return [int(bin) for bin in bin(value)[2:].zfill(bits)] 
+GPIO.setmode (GPIO.BCM)
 
-def dec2dac(value):
-    signal = dec2bin(value)
-    GPIO.output(dac, signal)
+for i in range (8): GPIO.setup(dac[i], GPIO.OUT)
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(dac, GPIO.OUT, initial = GPIO.LOW)
+def decimal2binary(value):
+ 
+    return [int(bit) for bit in bin(value)[2:].zfill(8)]
 
-period = int(input("Put period: "))
-try: 
+def binary2decimal (a):
+    val = 0
+    for i in range (8): val += a[7 - i] * pow (2, i)
+    return val
+
+try:
+    a = input()
+    c = float (input())
     while True:
-        for i in range(255):
-            dec2dac(i)
-            time.sleep(period/510)
-        i = 255
-        while (i>=0): 
-            time.sleep(period/510)
-            dec2dac(i)
-            i=i-1
-finally:    
-    GPIO.output(dac,0)
+        if a.isdigit() == False:
+            print("Enter value!\n")
+            continue
+        a = int (a)
+        if a < 0:
+            print("Enter positive value!")
+            continue
+        if str (a) == "q":
+            break
+        break
+    b = 0
+    j = 0
+    while j < 256:
+        for i in range (8): GPIO.output(dac[i], decimal2binary(b)[i])
+        time.sleep (c/512)
+        b += a
+        j = j + 1
+    b = 255
+    j = 255
+    while j > 0:
+        for i in range (8): GPIO.output(dac[i], decimal2binary(b)[i])
+        time.sleep (c/512)
+        b -= a
+        j = j - 1
+finally:
+    for i in range (8): GPIO.output(dac[i], 0)
+    GPIO.cleanup()
